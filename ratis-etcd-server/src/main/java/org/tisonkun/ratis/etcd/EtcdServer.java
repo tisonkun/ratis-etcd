@@ -35,6 +35,7 @@ import org.apache.ratis.protocol.RaftGroupId;
 import org.apache.ratis.protocol.RaftPeer;
 import org.apache.ratis.server.RaftServer;
 import org.apache.ratis.server.RaftServerConfigKeys;
+import org.apache.ratis.server.storage.RaftStorage;
 import org.apache.ratis.util.NetUtils;
 import org.tisonkun.etcd.ratis.proto.config.ServerConfig;
 
@@ -62,6 +63,7 @@ public class EtcdServer extends AbstractIdleService {
                 .setProperties(properties)
                 .setServerId(peer.getId())
                 .setStateMachine(new EtcdStateMachine())
+                .setOption(RaftStorage.StartupOption.RECOVER)
                 .build();
 
         final Parameters parameters = new Parameters();
