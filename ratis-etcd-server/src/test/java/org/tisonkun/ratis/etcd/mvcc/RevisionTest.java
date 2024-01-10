@@ -24,11 +24,11 @@ class RevisionTest {
     @Test
     void testRevisions() {
         final Revision[] revisions = {
-                Revision.create(0, 0),
-                Revision.create(1, 0),
-                Revision.create(1, 1),
-                Revision.create(2, 0),
-                Revision.create(Long.MAX_VALUE, Long.MAX_VALUE),
+            Revision.create(0, 0),
+            Revision.create(1, 0),
+            Revision.create(1, 1),
+            Revision.create(2, 0),
+            Revision.create(Long.MAX_VALUE, Long.MAX_VALUE),
         };
 
         for (int i = 0; i < revisions.length - 1; i++) {

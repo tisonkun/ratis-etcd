@@ -17,6 +17,7 @@
 package org.tisonkun.ratis.etcd.mvcc;
 
 import com.google.common.base.Preconditions;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -27,6 +28,7 @@ import javax.annotation.Nullable;
 import lombok.AccessLevel;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 
 /**
  * Generation contains multiple revisions of a key.
@@ -36,25 +38,37 @@ import lombok.RequiredArgsConstructor;
 public class Generation {
     @Nullable
     private Revision created;
-    private final long version;
+
+    @Setter(AccessLevel.PRIVATE)
+    private long version;
+
     private final List<Revision> revisions;
 
     public static Generation create(Revision... revs) {
-        final List<Revision> revisions = Arrays.asList(revs);
-        final Generation g = new Generation(revisions.size(), revisions);
+        final List<Revision> revisions = new ArrayList<>(Arrays.asList(revs));
+        final Generation g = new Generation(revisions);
         if (!revisions.isEmpty()) {
+            g.setVersion(revisions.size());
             g.setCreated(revisions.getFirst());
         }
         return g;
     }
 
-    public void setCreated(@Nonnull Revision created) {
+    private void setCreated(@Nonnull Revision created) {
         Preconditions.checkState(Objects.isNull(this.created), "created can only be set once");
         this.created = created;
     }
 
     public boolean isEmpty() {
         return revisions.isEmpty();
+    }
+
+    public void addRevision(Revision revision) {
+        if (revisions.isEmpty()) {
+            setCreated(revision);
+        }
+        version += 1;
+        revisions.add(revision);
     }
 
     /**
