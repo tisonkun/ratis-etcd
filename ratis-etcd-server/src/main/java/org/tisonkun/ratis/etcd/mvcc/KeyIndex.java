@@ -18,9 +18,6 @@ package org.tisonkun.ratis.etcd.mvcc;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -31,7 +28,7 @@ import lombok.RequiredArgsConstructor;
 @Data
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 public class KeyIndex {
-    private final ByteBuf keys;
+    private final Key key;
     private final List<Generation> generations;
 
     /**
@@ -39,14 +36,12 @@ public class KeyIndex {
      */
     private Revision modified;
 
-    public static KeyIndex create(String keys, long main, long sub) {
-        final ByteBuf bytes = Unpooled.buffer();
-        bytes.writeCharSequence(keys, StandardCharsets.UTF_8);
-        return create(bytes, main, sub);
+    public static KeyIndex create(String key, long main, long sub) {
+        return create(new Key(key), main, sub);
     }
 
-    public static KeyIndex create(ByteBuf keys, long main, long sub) {
-        final KeyIndex ki = new KeyIndex(keys, new ArrayList<>());
+    public static KeyIndex create(Key key, long main, long sub) {
+        final KeyIndex ki = new KeyIndex(key, new ArrayList<>());
         ki.modified = Revision.create(0);
         ki.put(main, sub);
         return ki;
@@ -59,7 +54,7 @@ public class KeyIndex {
                 "'put' with an unexpected smaller revision (given: %s, modified: %s, key: %s)",
                 rev,
                 modified,
-                keys);
+                key);
         if (generations.isEmpty()) {
             generations.add(Generation.create());
         }
@@ -68,7 +63,7 @@ public class KeyIndex {
     }
 
     public void tombstone(long main, long sub) throws RevisionNotFoundException {
-        Preconditions.checkState(isNotEmpty(), "'tombstone' got an unexpected empty keyIndex (key: {%s})", keys);
+        Preconditions.checkState(isNotEmpty(), "'tombstone' got an unexpected empty keyIndex (key: {%s})", key);
         if (generations.getLast().isEmpty()) {
             throw new RevisionNotFoundException();
         }
@@ -79,7 +74,7 @@ public class KeyIndex {
     public record Get(Revision modified, Revision created, long version) {}
 
     public Get get(long rev) throws RevisionNotFoundException {
-        Preconditions.checkState(isNotEmpty(), "'get' got an unexpected empty keyIndex (key: {%s})", keys);
+        Preconditions.checkState(isNotEmpty(), "'get' got an unexpected empty keyIndex (key: {%s})", key);
         final Generation g = findGeneration(rev).orElseThrow(RevisionNotFoundException::new);
         final int idx = g.walk(revision -> revision.main() > rev).orElseThrow(RevisionNotFoundException::new);
         return new Get(
